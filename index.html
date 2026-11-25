@@ -6,9 +6,10 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="format-detection" content="telephone=no,email=no,address=no">
 <title>Word Skills Flashcards</title>
+<meta name="app-version" content="cross-browser-2026-11-25">
 <style>
 :root {
   --mint:#cfe8d6;
@@ -1338,7 +1339,267 @@ section.hidden {
   display: none !important;
 }
 
+
+/* ===== Android/WebView flashcard front-reset fix ===== */
+.flashcard{
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+.face{
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.back{
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+.flashcard.flipped{
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+.flashcard.resetting{
+  -webkit-transition: none !important;
+  transition: none !important;
+  -webkit-transform: rotateY(0deg) !important;
+  transform: rotateY(0deg) !important;
+}
+
+
+/* =========================================================
+   CROSS-BROWSER / CROSS-DEVICE STABILITY LAYER
+   Chrome • Edge • Safari • Samsung Internet • WeChat WebView
+   ========================================================= */
+
+/* Stable viewport + browser text sizing */
+html{
+  width:100%;
+  min-height:100%;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+body{
+  width:100%;
+  min-height:100vh;
+  overflow-x:hidden;
+  overscroll-behavior-y:contain;
+}
+@supports (min-height:100svh){
+  body{min-height:100svh;}
+}
+@supports (min-height:100dvh){
+  body{min-height:100dvh;}
+}
+
+/* Safe areas: fallback first, then notch-aware padding */
+.app{
+  padding-top:12px !important;
+  padding-bottom:28px !important;
+}
+@supports (padding: env(safe-area-inset-top)){
+  .app{
+    padding-top:calc(12px + env(safe-area-inset-top)) !important;
+    padding-bottom:calc(28px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* Touch behaviour / browser-native style neutralization */
+.choice,
+.btn,
+.back-btn,
+[role="button"]{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+/* -----------------------------------------
+   Robust flashcard: no 3D/backface reliance
+   ----------------------------------------- */
+.flashcard,
+.flashcard.flipped,
+.flashcard.resetting{
+  position:relative !important;
+  -webkit-transform:none !important;
+  transform:none !important;
+  -webkit-transform-style:flat !important;
+  transform-style:flat !important;
+  -webkit-transition:none !important;
+  transition:none !important;
+  perspective:none !important;
+}
+
+.flashcard .face{
+  position:relative !important;
+  inset:auto !important;
+  width:100% !important;
+  min-height:inherit !important;
+  -webkit-transform:none !important;
+  transform:none !important;
+  -webkit-backface-visibility:visible !important;
+  backface-visibility:visible !important;
+}
+
+.flashcard .back{
+  display:none !important;
+  -webkit-transform:none !important;
+  transform:none !important;
+}
+
+.flashcard.show-back .front{
+  display:none !important;
+}
+.flashcard.show-back .back{
+  display:flex !important;
+}
+
+/* Strong hidden rule must win over every theme rule */
+.hidden,
+.spell-card.hidden,
+#flashArea.hidden,
+#spellArea.hidden,
+section.hidden,
+.flashcard .face.hidden{
+  display:none !important;
+}
+
+/* -----------------------------------------
+   Spelling inputs across mobile keyboards
+   ----------------------------------------- */
+.letter-box{
+  min-width:32px;
+  min-height:44px;
+  line-height:1 !important;
+  caret-color:#1666D9;
+  -webkit-appearance:none;
+  appearance:none;
+  border-radius:7px;
+}
+.letter-box:disabled{
+  opacity:1 !important;
+  -webkit-text-fill-color:currentColor;
+}
+
+/* iOS Safari zooms inputs below 16px */
+@media (max-width:700px){
+  .letter-box{
+    font-size:16px !important;
+  }
+}
+
+/* Allow long spelling answers to wrap instead of overflowing */
+.letter-grid{
+  max-width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  flex-wrap:wrap !important;
+  justify-content:center !important;
+  align-items:center !important;
+}
+
+/* Prevent long definitions/terms from breaking layouts */
+.bigword,
+.zh,
+.feedback,
+.choice strong,
+.meta,
+.small{
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-wrap:break-word;
+}
+
+/* Header should remain stable at narrow widths */
+.topbar,
+.top-left{
+  min-width:0;
+}
+.top-left > div:last-child{
+  min-width:0;
+}
+.brand,
+.topbar .small{
+  overflow-wrap:normal;
+  word-break:normal;
+}
+
+/* Small phones */
+@media (max-width:390px){
+  .app{
+    padding-left:7px !important;
+    padding-right:7px !important;
+  }
+  .panel{
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+  .modebar{
+    gap:5px !important;
+  }
+  .pill{
+    font-size:.72rem !important;
+    padding:5px 7px !important;
+  }
+  .letter-grid{
+    gap:4px !important;
+    row-gap:9px !important;
+  }
+  .letter-box{
+    width:32px !important;
+    height:45px !important;
+  }
+}
+
+/* Landscape phones: avoid oversized cards */
+@media (max-height:520px) and (orientation:landscape){
+  .flashcard,
+  .face{
+    min-height:210px !important;
+  }
+  .panel{
+    padding-top:12px !important;
+    padding-bottom:12px !important;
+  }
+}
+
+/* Respect accessibility / low-motion browser settings */
+@media (prefers-reduced-motion:reduce){
+  *,
+  *::before,
+  *::after{
+    scroll-behavior:auto !important;
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+
+/* Basic flex fallback if CSS Grid is unavailable */
+@supports not (display:grid){
+  .grid,
+  .footer-actions{
+    display:flex !important;
+    flex-wrap:wrap !important;
+  }
+  .grid > *,
+  .footer-actions > *{
+    flex:1 1 220px;
+  }
+}
+
 </style>
+
+<style id="absolute-hidden-safety">
+.hidden,
+.spell-card.hidden,
+#flashArea.hidden,
+#spellArea.hidden,
+section.hidden{
+  display:none !important;
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -1430,6 +1691,28 @@ section.hidden {
 </div>
 
 <script>
+
+/* ===== Lightweight compatibility helpers ===== */
+(function(){
+  if(window.NodeList && !NodeList.prototype.forEach){
+    NodeList.prototype.forEach = Array.prototype.forEach;
+  }
+  if(window.Element && !Element.prototype.closest){
+    Element.prototype.closest = function(selector){
+      var el = this;
+      while(el && el.nodeType === 1){
+        if(el.matches ? el.matches(selector) :
+           el.msMatchesSelector ? el.msMatchesSelector(selector) :
+           el.webkitMatchesSelector ? el.webkitMatchesSelector(selector) : false){
+          return el;
+        }
+        el = el.parentElement || el.parentNode;
+      }
+      return null;
+    };
+  }
+})();
+
 const DB = [{"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "sculpture", "pos": "n", "zh": "雕塑", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "sculpture"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "portrait", "pos": "n", "zh": "肖像", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "portrait"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "landscape", "pos": "n", "zh": "風景", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "landscape"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "still life", "pos": "n", "zh": "靜物畫", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "still life"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "paintbrush(es)", "pos": "n", "zh": "畫筆；油漆刷", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "paintbrush"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "collection", "pos": "n", "zh": "收集/一系列的東西", "definition": "a group of similar things that sb has brought together", "definition_source": "book", "card_kind": "core", "spelling_answer": "collection"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "work of art", "pos": "n phrase", "zh": "藝術品", "definition": "a painting, a statue, etc. of a very high quality", "definition_source": "book", "card_kind": "core", "spelling_answer": "work of art"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "exhibition", "pos": "n", "zh": "展覽", "definition": "a collection of paintings, objects, etc. that are shown in public", "definition_source": "book", "card_kind": "core", "spelling_answer": "exhibition"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "artist", "pos": "n", "zh": "藝術家", "definition": "sb who produces art (paintings, drawings, etc.)", "definition_source": "book", "card_kind": "core", "spelling_answer": "artist"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "period", "pos": "n", "zh": "一段時間，時期", "definition": "a particular amount of time in history", "definition_source": "book", "card_kind": "core", "spelling_answer": "period"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "abstract", "pos": "adj", "zh": "抽象的", "definition": "(of art) not showing people or things as they really are; expressing an idea", "definition_source": "book", "card_kind": "core", "spelling_answer": "abstract"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "range", "pos": "n", "zh": "系列", "definition": "different things of the same kind", "definition_source": "book", "card_kind": "core", "spelling_answer": "range"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "technique", "pos": "n", "zh": "技術", "definition": "a particular way of doing sth, often needing special skills", "definition_source": "book", "card_kind": "core", "spelling_answer": "technique"}, {"unit": "59", "topic": "Art", "section": "A. Art and artists", "term": "effect", "pos": "n", "zh": "效果;影響", "definition": "a result or a change that happens because of sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "effect"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "reaction (to sb/sth)", "pos": "N", "zh": "反應；回應", "definition": "sth that you do or say because of sth that has happened", "definition_source": "book", "card_kind": "core", "spelling_answer": "reaction"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "powerful", "pos": "adj", "zh": "有力量/影響力的", "definition": "having a strong effect on your mind or body", "definition_source": "book", "card_kind": "core", "spelling_answer": "powerful"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "reality", "pos": "N", "zh": "現實", "definition": "a thing that is actually experienced, not just imagined; the way life really is, not the way it may appear to be or you would like it to be", "definition_source": "book", "card_kind": "core", "spelling_answer": "reality"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "image", "pos": "N", "zh": "形象;畫面", "definition": "a picture or description that appears in a book, film or painting", "definition_source": "book", "card_kind": "core", "spelling_answer": "image"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "destruction", "pos": "N", "zh": "毀滅;破壞", "definition": "the act of damaging sth so badly that it can no longer be used or no longer exists", "definition_source": "book", "card_kind": "core", "spelling_answer": "destruction"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "move", "pos": "v", "zh": "感動；激起（情感）", "definition": "cause sb to have strong feelings, especially of sadness", "definition_source": "book", "card_kind": "core", "spelling_answer": "move"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "cheer (sb) up", "pos": "phrasal v", "zh": "（使）振作；（使）高興起來", "definition": "become happier, or make sb happier", "definition_source": "book", "card_kind": "core", "spelling_answer": "cheer up"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "symbol (of sth)", "pos": "n", "zh": "標誌；象徵", "definition": "a person, sign, object, etc. which represents sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "symbol"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "happiness", "pos": "n", "zh": "快樂", "definition": "the feeling of being happy", "definition_source": "book", "card_kind": "core", "spelling_answer": "happiness"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "optimistic", "pos": "adj", "zh": "樂觀的", "definition": "expecting good things to happen or sth to be successful", "definition_source": "book", "card_kind": "core", "spelling_answer": "optimistic"}, {"unit": "59", "topic": "Art", "section": "B. Reactions to art", "term": "original", "pos": "adj", "zh": "原作的；真跡的", "definition": "painted, written, etc. by the artist rather than copied", "definition_source": "book", "card_kind": "core", "spelling_answer": "original"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "publisher", "pos": "N", "zh": "出版人;出版公司", "definition": "a company or a person that prepares and prints books for selling. A publishing company publishes books.", "definition_source": "book", "card_kind": "core", "spelling_answer": "publisher"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "reference book", "pos": "N. phr", "zh": "參考書", "definition": "a book you use to find a piece of information", "definition_source": "book", "card_kind": "core", "spelling_answer": "reference book"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "pleasure", "pos": "N", "zh": "快樂;滿足", "definition": "a feeling of enjoyment", "definition_source": "book", "card_kind": "core", "spelling_answer": "pleasure"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "poetry", "pos": "N", "zh": "詩歌", "definition": "poems in general. A poem is a piece of writing arranged in separate lines that expresses thoughts and feelings. A person who writes poetry is a poet.", "definition_source": "book", "card_kind": "core", "spelling_answer": "poetry"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "alphabetical", "pos": "Adj", "zh": "按字母順序的", "definition": "listed in the same way as the alphabet: A, B, C, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "alphabetical"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "category", "pos": "N", "zh": "種類；類目", "definition": "a group of things or people that are similar to each other", "definition_source": "book", "card_kind": "core", "spelling_answer": "category"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "crime story", "pos": "N. phr", "zh": "犯罪故事", "definition": "a story about a crime", "definition_source": "book", "card_kind": "core", "spelling_answer": "crime story"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "historical", "pos": "Adj", "zh": "有關歷史的", "definition": "connected with real people or events in the past", "definition_source": "book", "card_kind": "core", "spelling_answer": "historical"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "mystery", "pos": "N", "zh": "懸疑作品", "definition": "a story in which the events are only explained at the end", "definition_source": "book", "card_kind": "core", "spelling_answer": "mystery"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "science fiction", "pos": "N. phr", "zh": "科幻小說", "definition": "books about events that take place in the future", "definition_source": "book", "card_kind": "core", "spelling_answer": "science fiction"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "non-fiction", "pos": "N", "zh": "記實文學", "definition": "books about real facts, people, events, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "non-fiction"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "biography", "pos": "N", "zh": "傳記", "definition": "the story of sb’s life written by someone else", "definition_source": "book", "card_kind": "core", "spelling_answer": "biography"}, {"unit": "65", "topic": "Books", "section": "A. Types of books", "term": "autobiography", "pos": "N", "zh": "自傳", "definition": "the story of sb’s life written by that person", "definition_source": "book", "card_kind": "core", "spelling_answer": "autobiography"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "survey", "pos": "N", "zh": "(民意)調查", "definition": "asking questions to find out what people think about sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "survey"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "title", "pos": "N", "zh": "標題", "definition": "the name of sth, e.g. a book or film", "definition_source": "book", "card_kind": "core", "spelling_answer": "title"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "cover", "pos": "N", "zh": "封面；封底", "definition": "the outside part of a book, magazine, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "cover"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "attract sb’s attention", "pos": "V phr", "zh": "吸引某人的注意", "definition": "If sth attracts your attention, it interests you so that you want to look at it.", "definition_source": "book", "card_kind": "core", "spelling_answer": "attract attention"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "recommendation", "pos": "N", "zh": "推薦；建議", "definition": "saying that sth is good or useful", "definition_source": "book", "card_kind": "core", "spelling_answer": "recommendation"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "original", "pos": "Adj", "zh": "原作的；新穎的", "definition": "new and different", "definition_source": "book", "card_kind": "core", "spelling_answer": "original"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "plot", "pos": "N", "zh": "情節", "definition": "what happens in a book, play or film", "definition_source": "book", "card_kind": "core", "spelling_answer": "plot"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "chapter", "pos": "N", "zh": "章節", "definition": "one of the parts of a book", "definition_source": "book", "card_kind": "core", "spelling_answer": "chapter"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "summary", "pos": "N", "zh": "總結；摘要", "definition": "a short way of telling sth by giving only the most important facts", "definition_source": "book", "card_kind": "core", "spelling_answer": "summary"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "narrative", "pos": "Adj", "zh": "敘述的", "definition": "describing events or telling a story", "definition_source": "book", "card_kind": "core", "spelling_answer": "narrative"}, {"unit": "65", "topic": "Books", "section": "B. Choosing a book", "term": "theme", "pos": "N", "zh": "主題", "definition": "the subject of a piece of writing, a talk, a film, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "theme"}, {"unit": "65", "topic": "Books", "section": "Spotlight", "term": "well written", "pos": "Adj", "zh": "寫得很好的", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "well written"}, {"unit": "65", "topic": "Books", "section": "Spotlight", "term": "well known", "pos": "Adj", "zh": "著名的;眾所周知的", "definition": "famous", "definition_source": "book", "card_kind": "core", "spelling_answer": "well known"}, {"unit": "65", "topic": "Books", "section": "Spotlight", "term": "well informed", "pos": "Adj", "zh": "見多識廣的", "definition": "knowing a lot", "definition_source": "book", "card_kind": "core", "spelling_answer": "well informed"}, {"unit": "68", "topic": "Festivals", "section": "Festivals", "term": "festival", "pos": "N", "zh": "節日;喜慶日", "definition": "a series of public events, e.g. concerts and shows", "definition_source": "book", "card_kind": "core", "spelling_answer": "festival"}, {"unit": "68", "topic": "Festivals", "section": "Festivals", "term": "occasion", "pos": "N", "zh": "（尤指某事發生的）時刻，時候", "definition": "a time when sth happens", "definition_source": "book", "card_kind": "core", "spelling_answer": "occasion"}, {"unit": "68", "topic": "Festivals", "section": "Festivals", "term": "folk (inf)", "pos": "N (inf.)", "zh": "人們", "definition": "people in general", "definition_source": "book", "card_kind": "core", "spelling_answer": "folk"}, {"unit": "68", "topic": "Festivals", "section": "Festivals", "term": "parade", "pos": "N", "zh": "（慶祝）遊行", "definition": "a celebration of a special event, usually with bands in the streets", "definition_source": "book", "card_kind": "core", "spelling_answer": "parade"}, {"unit": "68", "topic": "Festivals", "section": "Festivals", "term": "bury", "pos": "V", "zh": "埋葬;安葬", "definition": "put sth in a hole in the ground and cover it, especially a dead body", "definition_source": "book", "card_kind": "core", "spelling_answer": "bury"}, {"unit": "68", "topic": "Festivals", "section": "Festivals", "term": "approach", "pos": "V", "zh": "接近;靠近", "definition": "come nearer to sb/sth in distance or time", "definition_source": "book", "card_kind": "core", "spelling_answer": "approach"}, {"unit": "68", "topic": "Festivals", "section": "Festivals", "term": "site", "pos": "N", "zh": "位置;場所", "definition": "a place where sth happens or happened", "definition_source": "book", "card_kind": "core", "spelling_answer": "site"}, {"unit": "68", "topic": "Festivals", "section": "Festivals", "term": "light sth up / light up sth", "pos": "V", "zh": "照亮", "definition": "make sth bright with light", "definition_source": "book", "card_kind": "core", "spelling_answer": "light up"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "folk (adj)", "pos": "Adj.", "zh": "民間的;民俗的", "definition": "traditional in a community; of a traditional style", "definition_source": "book", "card_kind": "core", "spelling_answer": "folk"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "ceremony", "pos": "N", "zh": "儀式;典禮", "definition": "a formal public or religious event", "definition_source": "book", "card_kind": "core", "spelling_answer": "ceremony"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "beauty", "pos": "N", "zh": "美麗;優美", "definition": "the quality of being beautiful", "definition_source": "book", "card_kind": "core", "spelling_answer": "beauty"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "contest", "pos": "N", "zh": "比賽", "definition": "a game or competition that people try to win", "definition_source": "book", "card_kind": "core", "spelling_answer": "contest"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "entertainment", "pos": "N", "zh": "娛樂；娛樂活動", "definition": "things that people enjoy watching and listening to, e.g. TV, film, music, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "entertainment"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "celebration", "pos": "N", "zh": "慶祝；慶祝活動", "definition": "a time when you enjoy yourself because you have a special reason to be happy", "definition_source": "book", "card_kind": "core", "spelling_answer": "celebration"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "mean a lot (to sb)", "pos": "phrasal V", "zh": "意義重大", "definition": "be very important (to sb)", "definition_source": "book", "card_kind": "core", "spelling_answer": "mean a lot"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "neighbourhood", "pos": "N", "zh": "鄰近地區", "definition": "an area of a town and the people who live there", "definition_source": "book", "card_kind": "core", "spelling_answer": "neighbourhood"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "community", "pos": "N", "zh": "團體；社區", "definition": "all the people who live in an area or town", "definition_source": "book", "card_kind": "core", "spelling_answer": "community"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "have fun", "pos": "phrasal", "zh": "玩得高興", "definition": "enjoy yourself", "definition_source": "book", "card_kind": "core", "spelling_answer": "have fun"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "dancer", "pos": "N", "zh": "舞蹈演員", "definition": "sb who dances", "definition_source": "book", "card_kind": "core", "spelling_answer": "dancer"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "dress up", "pos": "phrasal V", "zh": "穿上盛裝；裝扮", "definition": "put on special clothes either for fun or for a formal event", "definition_source": "book", "card_kind": "core", "spelling_answer": "dress up"}, {"unit": "68", "topic": "Festivals", "section": "Glossary", "term": "costume", "pos": "N", "zh": "服裝；戲裝", "definition": "special clothes people wear for a parade, a play, a party, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "costume"}, {"unit": "68", "topic": "Festivals", "section": "Spotlight: religion", "term": "religion", "pos": "N", "zh": "宗教信仰", "definition": "believing in one or more gods and the activities connected with this", "definition_source": "book", "card_kind": "core", "spelling_answer": "religion"}, {"unit": "68", "topic": "Festivals", "section": "Spotlight: religion", "term": "gods", "pos": "N", "zh": "神", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "gods"}, {"unit": "68", "topic": "Festivals", "section": "Spotlight: religion", "term": "religious", "pos": "Adj.", "zh": "信教的;宗教的", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "religious"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "pull up", "pos": "phrasal v", "zh": "（車）停下", "definition": "(of a car or its driver) stop", "definition_source": "book", "card_kind": "core", "spelling_answer": "pull up"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "drop by", "pos": "phrasal v", "zh": "(突然)拜訪，看望", "definition": "go to sb’s house on an informal visit or without telling them that you are coming", "definition_source": "book", "card_kind": "core", "spelling_answer": "drop by"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "stay up", "pos": "phrasal v", "zh": "熬夜，深夜不睡", "definition": "go to bed later than usual", "definition_source": "book", "card_kind": "core", "spelling_answer": "stay up"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "go off", "pos": "phrasal v", "zh": "（警報器等）突然發出巨響", "definition": "make a sudden loud noise", "definition_source": "book", "card_kind": "core", "spelling_answer": "go off"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "get into sth", "pos": "phrasal v", "zh": "參與，開展", "definition": "start a career in a particular profession", "definition_source": "book", "card_kind": "core", "spelling_answer": "get into"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "run into sb", "pos": "phrasal v", "zh": "遇到 (某人)", "definition": "meet sb by chance", "definition_source": "book", "card_kind": "core", "spelling_answer": "run into"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "bump into sb", "pos": "phrasal v", "zh": "遇到 (某人)", "definition": "meet sb by chance", "definition_source": "book", "card_kind": "core", "spelling_answer": "bump into"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "take up sth", "pos": "phrasal v", "zh": "佔據（地方或時間）", "definition": "use or fill time or space", "definition_source": "book", "card_kind": "core", "spelling_answer": "take up"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "go off sth", "pos": "phrasal v", "zh": "不再喜歡，對…不再感興趣", "definition": "stop liking or being interested in sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "go off"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "get out of sth/doing sth", "pos": "phrasal v", "zh": "逃避", "definition": "avoid a duty or doing sth that you have said you will do", "definition_source": "book", "card_kind": "core", "spelling_answer": "get out of"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Inseparable phrasal verbs", "term": "come up with sth", "pos": "phrasal v", "zh": "想出(答案/解決辦法)，提出", "definition": "find an answer or solution to sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "come up with"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Separable phrasal verbs", "term": "turn sth up", "pos": "phrasal v", "zh": "把…調高", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "turn up"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Separable phrasal verbs", "term": "throw sth away", "pos": "phrasal v", "zh": "扔掉", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "throw away"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Separable phrasal verbs", "term": "switch sth on/off", "pos": "phrasal v", "zh": "打開/關閉開關", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "switch on/off"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Separable phrasal verbs", "term": "fill sth in", "pos": "phrasal v", "zh": "填寫（正式文件）", "definition": "complete a form, etc. by writing information on it", "definition_source": "book", "card_kind": "core", "spelling_answer": "fill in"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Separable phrasal verbs", "term": "check sth out", "pos": "phrasal v", "zh": "查證；核實 ; 看看/試試", "definition": "find out more information about sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "check out"}, {"unit": "83", "topic": "Phrasal Verbs", "section": "Separable phrasal verbs", "term": "put sth out", "pos": "phrasal v", "zh": "撲滅（火）", "definition": "make sth stop burning, e.g. a fire, cigarette, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "put out"}];
 const UNIT_INFO = {
   "59":["Art","Art"],
@@ -1459,6 +1742,7 @@ function goBack(){
 
   if(currentScreen==="study"){
     if(index > 0){
+      if(mode!=="spelling") resetFlashcardToFront();
       index--;
       spellingAnswered=false;
       render();
@@ -1525,6 +1809,26 @@ function startStudy(){
   render();
 }
 function noteHTML(c){ return ""; }
+
+let flashcardSide = "front";
+
+function setFlashcardSide(side){
+  const card = $("flashcard");
+  if(!card) return;
+  flashcardSide = side === "back" ? "back" : "front";
+  card.classList.toggle("show-back", flashcardSide === "back");
+  card.classList.remove("flipped", "resetting");
+  card.setAttribute("data-side", flashcardSide);
+}
+
+function resetFlashcardToFront(){
+  setFlashcardSide("front");
+}
+
+function toggleFlashcard(){
+  setFlashcardSide(flashcardSide === "front" ? "back" : "front");
+}
+
 function render(){
   if(index>=deck.length) return finish();
   const c=deck[index];
@@ -1541,7 +1845,7 @@ function render(){
       : `<div class="zh">${c.zh}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`;
     buildLetterGrid(c.term);
   } else {
-    $("flashcard").classList.remove("flipped");
+    resetFlashcardToFront();
     const front = mode==="zh-en"
       ? `<div class="zh">${c.zh}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`
       : `<div class="bigword">${c.term}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`;
@@ -1555,11 +1859,16 @@ function markAgain(){
   const c = deck[index];
   if(!mistakes.includes(c)) mistakes.push(c);
   deck.push(c);
+  if(mode!=="spelling") resetFlashcardToFront();
   index++;
   spellingAnswered = false;
   render();
 }
-function next(){ index++; render(); }
+function next(){
+  if(mode!=="spelling") resetFlashcardToFront();
+  index++;
+  render();
+}
 function normalize(s){return s.toLowerCase().trim().replace(/[’']/g,"'").replace(/\s+/g," ");}
 
 function spellingAnswer(term){
@@ -1589,23 +1898,39 @@ function buildLetterGrid(term){
       inp.maxLength=1;
       inp.dataset.charIndex=i;
       inp.dataset.letterIndex=letterIndex++;
+      inp.type="text";
       inp.autocomplete="off";
       inp.autocapitalize="off";
       inp.spellcheck=false;
       inp.inputMode="text";
+      inp.setAttribute("autocorrect","off");
+      inp.setAttribute("enterkeyhint","next");
       inp.setAttribute("aria-label",`Letter ${letterIndex}`);
       inp.addEventListener("input",e=>{
+        const inputs=Array.from(grid.querySelectorAll(".letter-box"));
+        const idx=inputs.indexOf(e.target);
+
         let v=(e.target.value||"").replace(/[^A-Za-z]/g,"");
         e.target.value=v ? v.slice(-1).toLowerCase() : "";
         e.target.classList.remove("wrong-box","correct-box");
-        if(e.target.value){
-          const inputs=[...grid.querySelectorAll(".letter-box")];
-          const idx=inputs.indexOf(e.target);
-          if(idx>=0 && idx<inputs.length-1) inputs[idx+1].focus();
+
+        // Android/Gboard/Samsung Keyboard may report Backspace via inputType
+        // without a reliable keydown event.
+        if(e.inputType==="deleteContentBackward" && !e.target.value){
+          if(idx>0){
+            try{ inputs[idx-1].focus({preventScroll:true}); }
+            catch(err){ inputs[idx-1].focus(); }
+          }
+          return;
+        }
+
+        if(e.target.value && idx>=0 && idx<inputs.length-1){
+          try{ inputs[idx+1].focus({preventScroll:true}); }
+          catch(err){ inputs[idx+1].focus(); }
         }
       });
       inp.addEventListener("keydown",e=>{
-        const inputs=[...grid.querySelectorAll(".letter-box")];
+        const inputs=Array.from(grid.querySelectorAll(".letter-box"));
         const idx=inputs.indexOf(e.target);
         if(e.key==="Backspace" && !e.target.value && idx>0){
           inputs[idx-1].focus();
@@ -1620,8 +1945,9 @@ function buildLetterGrid(term){
       });
       inp.addEventListener("paste",e=>{
         e.preventDefault();
-        const pasted=(e.clipboardData.getData("text")||"").replace(/[^A-Za-z]/g,"").toLowerCase();
-        const inputs=[...grid.querySelectorAll(".letter-box")];
+        const clip = e.clipboardData || window.clipboardData;
+        const pasted=((clip && clip.getData("text"))||"").replace(/[^A-Za-z]/g,"").toLowerCase();
+        const inputs=Array.from(grid.querySelectorAll(".letter-box"));
         const start=inputs.indexOf(e.target);
         for(let k=0;k<pasted.length && start+k<inputs.length;k++){
           inputs[start+k].value=pasted[k];
@@ -1644,13 +1970,23 @@ function buildLetterGrid(term){
 
   setTimeout(()=>{
     const first=grid.querySelector(".letter-box");
-    if(first) first.focus();
+    if(!first) return;
+
+    // On phones/tablets, do not auto-open the virtual keyboard or jump the page.
+    const touchLike = (
+      ("ontouchstart" in window) ||
+      (window.matchMedia && window.matchMedia("(pointer:coarse)").matches)
+    );
+    if(!touchLike){
+      try{ first.focus({preventScroll:true}); }
+      catch(e){ first.focus(); }
+    }
   },50);
 }
 
 function getTypedSpelling(){
   const answer=spellingAnswer(deck[index].term);
-  const letters=[...$("letterGrid").querySelectorAll(".letter-box")].map(x=>x.value.toLowerCase());
+  const letters=Array.from($("letterGrid").querySelectorAll(".letter-box")).map(x=>x.value.toLowerCase());
   let p=0, out="";
   for(const ch of [...answer]){
     if(/[A-Za-z]/.test(ch)) out += letters[p++] || "";
@@ -1660,7 +1996,7 @@ function getTypedSpelling(){
 }
 
 function setLetterBoxesState(isCorrect){
-  const inputs=[...$("letterGrid").querySelectorAll(".letter-box")];
+  const inputs=Array.from($("letterGrid").querySelectorAll(".letter-box"));
   const correctLetters=[...spellingAnswer(deck[index].term)].filter(ch=>/[A-Za-z]/.test(ch));
   inputs.forEach((inp,i)=>{
     const ok=(inp.value||"").toLowerCase()===correctLetters[i].toLowerCase();
@@ -1696,7 +2032,7 @@ function checkSpelling(){
 function showSpellAnswer(){
   if(!mistakes.includes(deck[index])) mistakes.push(deck[index]);
   const answer=spellingAnswer(deck[index].term);
-  const inputs=[...$("letterGrid").querySelectorAll(".letter-box")];
+  const inputs=Array.from($("letterGrid").querySelectorAll(".letter-box"));
   const correctLetters=[...answer].filter(ch=>/[A-Za-z]/.test(ch));
   inputs.forEach((inp,i)=>{
     inp.value=(correctLetters[i]||"").toLowerCase();
@@ -1730,8 +2066,8 @@ document.querySelectorAll(".spellModeChoice").forEach(b=>b.onclick=()=>selectThe
 }));
 $("homeBtn").onclick=()=>show("home");
 $("backBtn").onclick=goBack;
-$("flashcard").onclick=()=>$("flashcard").classList.toggle("flipped");
-$("flipBtn").onclick=()=>$("flashcard").classList.toggle("flipped");
+$("flashcard").onclick=toggleFlashcard;
+$("flipBtn").onclick=toggleFlashcard;
 $("againBtn").onclick=markAgain;
 $("nextBtn").onclick=next;
 $("checkBtn").onclick=checkSpelling;
@@ -1751,6 +2087,13 @@ document.addEventListener("keydown", function(e){
 
 
 
+
+
+window.addEventListener("pageshow", function(e){
+  if(currentScreen === "study" && mode !== "spelling"){
+    resetFlashcardToFront();
+  }
+});
 
 </script>
 </body>
