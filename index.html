@@ -1588,6 +1588,51 @@ section.hidden,
   }
 }
 
+
+/* ===== First-letter spelling hints ===== */
+.letter-box.given-letter{
+  background:#FFF3A6 !important;
+  color:#1666D9 !important;
+  -webkit-text-fill-color:#1666D9 !important;
+  border-color:#1666D9 !important;
+  border-bottom-color:#1666D9 !important;
+  font-weight:800 !important;
+  cursor:default !important;
+}
+
+
+/* ===== Mobile scrolling / touch safety fix ===== */
+html, body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  touch-action: auto !important;
+  overscroll-behavior: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  position: static !important;
+}
+
+/* Only interactive controls get tap optimization. */
+.choice,
+.btn,
+.back-btn,
+[role="button"] {
+  touch-action: manipulation !important;
+}
+
+/* Do not let any screen accidentally trap vertical scrolling. */
+#home,
+#mode,
+#spellMode,
+#study,
+#done,
+.panel,
+.app {
+  overflow-y: visible !important;
+}
+
 </style>
 
 <style id="absolute-hidden-safety">
@@ -1598,6 +1643,51 @@ section.hidden,
 section.hidden{
   display:none !important;
 }
+
+/* ===== First-letter spelling hints ===== */
+.letter-box.given-letter{
+  background:#FFF3A6 !important;
+  color:#1666D9 !important;
+  -webkit-text-fill-color:#1666D9 !important;
+  border-color:#1666D9 !important;
+  border-bottom-color:#1666D9 !important;
+  font-weight:800 !important;
+  cursor:default !important;
+}
+
+
+/* ===== Mobile scrolling / touch safety fix ===== */
+html, body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  touch-action: auto !important;
+  overscroll-behavior: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  position: static !important;
+}
+
+/* Only interactive controls get tap optimization. */
+.choice,
+.btn,
+.back-btn,
+[role="button"] {
+  touch-action: manipulation !important;
+}
+
+/* Do not let any screen accidentally trap vertical scrolling. */
+#home,
+#mode,
+#spellMode,
+#study,
+#done,
+.panel,
+.app {
+  overflow-y: visible !important;
+}
+
 </style>
 
 </head>
@@ -1772,7 +1862,7 @@ function shuffle(arr) {
 function selectThen(button, action){
   document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));
   button.classList.add("selected");
-  setTimeout(action, 230);
+  setTimeout(action, 80);
 }
 function buildHome(){
   const units=["59","65","68","83","all"];
@@ -1906,8 +1996,20 @@ function buildLetterGrid(term){
       inp.setAttribute("autocorrect","off");
       inp.setAttribute("enterkeyhint","next");
       inp.setAttribute("aria-label",`Letter ${letterIndex}`);
+
+      // Give only the very first letter of the whole answer as a fixed hint.
+      const isFirstLetter = letterIndex === 1;
+      if(isFirstLetter){
+        inp.value = ch.toLowerCase();
+        inp.readOnly = true;
+        inp.tabIndex = -1;
+        inp.classList.add("given-letter");
+        grid.appendChild(inp);
+        return;
+      }
+
       inp.addEventListener("input",e=>{
-        const inputs=Array.from(grid.querySelectorAll(".letter-box"));
+        const inputs=Array.from(grid.querySelectorAll(".letter-box:not([readonly])"));
         const idx=inputs.indexOf(e.target);
 
         let v=(e.target.value||"").replace(/[^A-Za-z]/g,"");
@@ -1930,7 +2032,7 @@ function buildLetterGrid(term){
         }
       });
       inp.addEventListener("keydown",e=>{
-        const inputs=Array.from(grid.querySelectorAll(".letter-box"));
+        const inputs=Array.from(grid.querySelectorAll(".letter-box:not([readonly])"));
         const idx=inputs.indexOf(e.target);
         if(e.key==="Backspace" && !e.target.value && idx>0){
           inputs[idx-1].focus();
@@ -1947,7 +2049,7 @@ function buildLetterGrid(term){
         e.preventDefault();
         const clip = e.clipboardData || window.clipboardData;
         const pasted=((clip && clip.getData("text"))||"").replace(/[^A-Za-z]/g,"").toLowerCase();
-        const inputs=Array.from(grid.querySelectorAll(".letter-box"));
+        const inputs=Array.from(grid.querySelectorAll(".letter-box:not([readonly])"));
         const start=inputs.indexOf(e.target);
         for(let k=0;k<pasted.length && start+k<inputs.length;k++){
           inputs[start+k].value=pasted[k];
@@ -1969,7 +2071,7 @@ function buildLetterGrid(term){
   });
 
   setTimeout(()=>{
-    const first=grid.querySelector(".letter-box");
+    const first=grid.querySelector(".letter-box:not([readonly])");
     if(!first) return;
 
     // On phones/tablets, do not auto-open the virtual keyboard or jump the page.
