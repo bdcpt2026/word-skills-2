@@ -135,13 +135,12 @@ select{border:1px solid var(--line);border-radius:12px;padding:8px 10px;backgrou
 html, body {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  min-height: 100dvh;
-  touch-action: manipulation;
+  min-height: 100vh;
+  touch-action: auto;
 }
 
 button,
@@ -794,6 +793,7 @@ body{
 #home{
   position:relative;
   overflow:hidden;
+  overflow:clip;
   background:#DCE9FB !important;
   padding-top:54px !important;
 }
@@ -1380,15 +1380,13 @@ html{
 body{
   width:100%;
   min-height:100vh;
-  overflow-x:hidden;
-  overscroll-behavior-y:contain;
+  overflow:visible;
+  overscroll-behavior-y:auto;
 }
 @supports (min-height:100svh){
   body{min-height:100svh;}
 }
-@supports (min-height:100dvh){
-  body{min-height:100dvh;}
-}
+
 
 /* Safe areas: fallback first, then notch-aware padding */
 .app{
@@ -1407,7 +1405,7 @@ body{
 .btn,
 .back-btn,
 [role="button"]{
-  touch-action:manipulation;
+  touch-action:auto;
   -webkit-tap-highlight-color:transparent;
   -webkit-touch-callout:none;
   user-select:none;
@@ -1601,36 +1599,32 @@ section.hidden,
 }
 
 
-/* ===== Mobile scrolling / touch safety fix ===== */
-html, body {
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  touch-action: auto !important;
-  overscroll-behavior: auto !important;
-  -webkit-overflow-scrolling: touch;
+/* Native page scrolling; no nested viewport or forced touch capture. */
+html { overflow-y:auto; overflow-x:hidden; }
+body { overflow:visible; height:auto; touch-action:auto; }
+.app { height:auto; max-height:none; overflow:visible; }
+.choice,.btn,.back-btn,[role="button"] { touch-action:auto; }
+/* Preserve the original editorial design and selected-card feedback. */
+@media (hover:none) {
+  .choice:hover:not(.selected):not(:active) {transform:none !important; border-color:#78A9EB !important; box-shadow:none !important;}
+  .btn:hover:not(:active):not(.primary):not(.yellow) {background:#FFFDF2 !important;}
+  .back-btn:hover:not(:active) {transform:none; background:#FFFDF2 !important;}
+}
+.choice:active {transform:translateY(2px) scale(.99) !important; background:#FFF3A6 !important; box-shadow:2px 2px 0 #1666D9 !important;}
+.btn,.back-btn {transition:transform .12s ease, box-shadow .12s ease, background-color .12s ease;}
+.btn:active,.back-btn:active {transform:translateY(2px) scale(.98) !important; box-shadow:1px 1px 0 #1666D9 !important;}
+@media (prefers-reduced-motion:reduce) {
+  .choice:active,.choice.selected,.btn:active,.back-btn:active {transform:none !important;}
 }
 
-body {
-  position: static !important;
-}
 
-/* Only interactive controls get tap optimization. */
-.choice,
-.btn,
-.back-btn,
-[role="button"] {
-  touch-action: manipulation !important;
-}
-
-/* Do not let any screen accidentally trap vertical scrolling. */
-#home,
-#mode,
-#spellMode,
-#study,
-#done,
-.panel,
-.app {
-  overflow-y: visible !important;
+/* Center the single spelling Next button without changing the existing controls. */
+@media (max-width:700px){
+  #spellArea .footer-actions #spellNextBtn:not(.hidden){
+    grid-column:1 / -1;
+    justify-self:center;
+    width:calc((100% - 8px) / 2);
+  }
 }
 
 </style>
@@ -1653,39 +1647,6 @@ section.hidden{
   border-bottom-color:#1666D9 !important;
   font-weight:800 !important;
   cursor:default !important;
-}
-
-
-/* ===== Mobile scrolling / touch safety fix ===== */
-html, body {
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  touch-action: auto !important;
-  overscroll-behavior: auto !important;
-  -webkit-overflow-scrolling: touch;
-}
-
-body {
-  position: static !important;
-}
-
-/* Only interactive controls get tap optimization. */
-.choice,
-.btn,
-.back-btn,
-[role="button"] {
-  touch-action: manipulation !important;
-}
-
-/* Do not let any screen accidentally trap vertical scrolling. */
-#home,
-#mode,
-#spellMode,
-#study,
-#done,
-.panel,
-.app {
-  overflow-y: visible !important;
 }
 
 </style>
@@ -1817,13 +1778,16 @@ const $ = id => document.getElementById(id);
 const screens = ["home","mode","spellMode","study","done"];
 let currentScreen = "home";
 let previousScreen = null;
+let spellingHistory = {};
 
 function show(id, remember=true) {
+  if(selectionTimer !== null){clearTimeout(selectionTimer); selectionTimer=null;}
   if(remember && currentScreen !== id) previousScreen = currentScreen;
   currentScreen = id;
   screens.forEach(x=>$(x).classList.toggle("hidden",x!==id));
   $("homeBtn").classList.toggle("hidden",id==="home");
   $("backBtn").classList.toggle("hidden",id==="home");
+  if(id!=="home") window.scrollTo(0,0);
 }
 
 function goBack(){
@@ -1859,10 +1823,12 @@ function shuffle(arr) {
   for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
+let selectionTimer = null;
 function selectThen(button, action){
+  if(selectionTimer !== null) return;
   document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));
   button.classList.add("selected");
-  setTimeout(action, 80);
+  selectionTimer = setTimeout(()=>{selectionTimer=null; action();},230);
 }
 function buildHome(){
   const units=["59","65","68","83","all"];
@@ -1879,7 +1845,7 @@ function startStudy(){
     d=d.filter(x=>x.definition && x.definition.trim());
   }
   if($("shuffleOn").checked) d=shuffle(d);
-  deck=d; index=0; mistakes=[]; correctCount=0;
+  deck=d; index=0; mistakes=[]; correctCount=0; spellingHistory={};
   $("unitPill").textContent = chosenUnit==="all" ? "All Units" : `Unit ${chosenUnit}`;
   $("modePill").textContent = mode==="zh-en" ? "Chinese → English" : mode==="en-zh" ? "English → Chinese" : (spellingMode==="definition" ? "Definition → Spell" : "Chinese → Spell");
   $("flashArea").classList.toggle("hidden",mode==="spelling");
@@ -1930,10 +1896,12 @@ function render(){
     $("feedback").className="feedback";
     $("spellNextBtn").classList.add("hidden");
     $("checkBtn").classList.remove("hidden");
+    $("spellAgainBtn").classList.remove("hidden");
     $("spellPrompt").innerHTML = spellingMode==="definition"
       ? `<div class="small" style="margin-bottom:10px">Definition</div><div class="zh">${c.definition}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`
       : `<div class="zh">${c.zh}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`;
     buildLetterGrid(c.term);
+    restoreSpellingHistory();
   } else {
     resetFlashcardToFront();
     const front = mode==="zh-en"
@@ -2071,7 +2039,7 @@ function buildLetterGrid(term){
   });
 
   setTimeout(()=>{
-    const first=grid.querySelector(".letter-box:not([readonly])");
+    const first=grid.querySelector(".letter-box:not([readonly]):not(:disabled)");
     if(!first) return;
 
     // On phones/tablets, do not auto-open the virtual keyboard or jump the page.
@@ -2109,6 +2077,28 @@ function setLetterBoxesState(isCorrect){
 
 
 
+function saveSpellingHistory(){
+  spellingHistory[index] = {
+    values:Array.from($("letterGrid").querySelectorAll(".letter-box")).map(x=>({value:x.value,className:x.className,disabled:x.disabled})),
+    feedback:$("feedback").innerHTML,
+    feedbackClass:$("feedback").className
+  };
+}
+function restoreSpellingHistory(){
+  const saved=spellingHistory[index];
+  if(!saved) return;
+  Array.from($("letterGrid").querySelectorAll(".letter-box")).forEach((inp,i)=>{
+    const old=saved.values[i];
+    if(old){inp.value=old.value;inp.className=old.className;inp.disabled=old.disabled;}
+  });
+  $("feedback").innerHTML=saved.feedback;
+  $("feedback").className=saved.feedbackClass;
+  spellingAnswered=true;
+  $("checkBtn").classList.add("hidden");
+  $("spellAgainBtn").classList.add("hidden");
+  $("spellNextBtn").classList.remove("hidden");
+}
+
 function checkSpelling(){
   if(spellingAnswered) return;
   const ans=getTypedSpelling();
@@ -2128,10 +2118,13 @@ function checkSpelling(){
     $("feedback").className="feedback wrong";
   }
   $("checkBtn").classList.add("hidden");
+  $("spellAgainBtn").classList.add("hidden");
   $("spellNextBtn").classList.remove("hidden");
+  saveSpellingHistory();
 }
 
 function showSpellAnswer(){
+  if(spellingAnswered) return;
   if(!mistakes.includes(deck[index])) mistakes.push(deck[index]);
   const answer=spellingAnswer(deck[index].term);
   const inputs=Array.from($("letterGrid").querySelectorAll(".letter-box"));
@@ -2145,7 +2138,9 @@ function showSpellAnswer(){
   $("feedback").className="feedback";
   spellingAnswered=true;
   $("checkBtn").classList.add("hidden");
+  $("spellAgainBtn").classList.add("hidden");
   $("spellNextBtn").classList.remove("hidden");
+  saveSpellingHistory();
 }
 function finish(){
   $("progressBar").style.width="100%";
@@ -2175,7 +2170,7 @@ $("nextBtn").onclick=next;
 $("checkBtn").onclick=checkSpelling;
 $("spellAgainBtn").onclick=showSpellAnswer;
 $("spellNextBtn").onclick=next;
-$("reviewBtn").onclick=()=>{deck=shuffle([...mistakes]);index=0;mistakes=[];correctCount=0;show("study");render();};
+$("reviewBtn").onclick=()=>{deck=shuffle([...mistakes]);index=0;mistakes=[];correctCount=0;spellingHistory={};show("study");render();};
 $("restartBtn").onclick=()=>startStudy();
 
 document.addEventListener("keydown", function(e){
